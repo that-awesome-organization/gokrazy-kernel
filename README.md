@@ -22,7 +22,7 @@ newgrp docker
 
 Install the kernel-related gokrazy tools:
 ```
-go install github.com/gokrazy/kernel/cmd/...
+go install development.thatwebsite.xyz/gokrazy/kernel/cmd/...
 ```
 
 And build a new kernel (takes about 5 minutes):
@@ -30,5 +30,5 @@ And build a new kernel (takes about 5 minutes):
 gokr-rebuild-kernel
 ```
 
-The new kernel is stored in `$GOPATH/src/github.com/gokrazy/kernel` so
+The new kernel is stored in `$GOPATH/src/development.thatwebsite.xyz/gokrazy/kernel` so
 that it will be picked up by `gokr-packer`.
