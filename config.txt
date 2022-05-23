@@ -1,0 +1,9 @@
+# Switch the CPU from ARMv7 into ARMv8 (aarch64) mode
+arm_control=0x200
+
+enable_uart=0
+
+kernel=vmlinuz
+
+# over_voltage=6
+# arm_freq=2000
