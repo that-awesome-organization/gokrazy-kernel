@@ -1160,7 +1160,7 @@ func compile() error {
 		"ARCH=arm64",
 		"CROSS_COMPILE=aarch64-linux-gnu-",
 		"KBUILD_BUILD_USER=gokrazy",
-		"KBUILD_BUILD_HOST=docker",
+		"KBUILD_BUILD_HOST=worker.thatwebsite.xyz",
 		"KBUILD_BUILD_TIMESTAMP=Wed Mar  1 20:57:29 UTC 2017",
 	)
 	make := exec.Command("make", "Image.gz", "dtbs", "modules", "-j"+strconv.Itoa(runtime.NumCPU()))
