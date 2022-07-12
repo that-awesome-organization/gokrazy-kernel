@@ -36,6 +36,7 @@ kernel/fs/lockd/lockd.ko
 kernel/fs/nls/nls_base.ko
 kernel/fs/nls/nls_cp437.ko
 kernel/fs/nls/nls_iso8859-1.ko
+kernel/fs/ntfs3/ntfs3.ko
 kernel/fs/autofs/autofs4.ko
 kernel/fs/fuse/fuse.ko
 kernel/fs/overlayfs/overlay.ko
