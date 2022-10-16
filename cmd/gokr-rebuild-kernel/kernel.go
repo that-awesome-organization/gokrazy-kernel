@@ -1,17 +1,37 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
+)
+
+var (
+	latestVersion = "latest"
+
+	releasesURL                  = "https://www.kernel.org/releases.json"
+	buildPath                    = flag.String("build-path", "cmd/gokr-build-kernel", "Build Package path")
+	dobuild                      = flag.Bool("enable-build", false, "Enables building the kernel as well")
+	overwriteContainerExecutable = flag.String("overwrite_container_executable",
+		"",
+		"E.g. docker or podman to overwrite the automatically detected container executable")
+
+	urlTemplate = `
+package main
+
+// see https://www.kernel.org/releases.json
+var latest = "{{ . }}"
+`
 )
 
 const dockerFileContents = `
@@ -120,10 +140,18 @@ func getContainerExecutable() (string, error) {
 }
 
 func main() {
-	var overwriteContainerExecutable = flag.String("overwrite_container_executable",
-		"",
-		"E.g. docker or podman to overwrite the automatically detected container executable")
 	flag.Parse()
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	err := updateVersion()
+	if err != nil && err.Error() != "no change" {
+		log.Fatal(err)
+	}
+
+	if err != nil && err.Error() == "no change" {
+		log.Println("No changes found, skipping the build")
+		return
+	}
 	executable, err := getContainerExecutable()
 	if err != nil {
 		log.Fatal(err)
@@ -135,7 +163,7 @@ func main() {
 	// We explicitly use /tmp, because Docker only allows volume mounts under
 	// certain paths on certain platforms, see
 	// e.g. https://docs.docker.com/docker-for-mac/osxfs/#namespaces for macOS.
-	tmp, err := ioutil.TempDir("/tmp", "gokr-rebuild-kernel")
+	tmp, err := os.MkdirTemp("/tmp", "gokr-rebuild-kernel")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -311,4 +339,132 @@ func main() {
 	if err := cp.Run(); err != nil {
 		log.Fatalf("%v: %v", cp.Args, err)
 	}
+
+	if err := pushBuild(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func pushBuild() error {
+	if err := exec.Command("git", "add", ".").Run(); err != nil {
+		return err
+	}
+
+	if o, err := exec.Command("git", "commit", "-m", fmt.Sprintf("Built to version %s", latestVersion)).CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		// log.Fatal(err)
+		log.Println("ignoring exit code 1")
+	}
+
+	if o, err := exec.Command("git", "push", "origin", fmt.Sprintf("build-%s", latestVersion)).CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		return err
+	}
+	return nil
+}
+
+func updateVersion() error {
+	r, err := http.Get(releasesURL)
+	if err != nil {
+		return err
+	}
+	var resp ReleasesResponse
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
+		return err
+	}
+
+	downloadURL := ""
+	for _, release := range resp.Releases {
+		if release.Version == resp.LatestStable.Version {
+			downloadURL = release.Source
+			break
+		}
+	}
+
+	latestVersion = resp.LatestStable.Version
+
+	// update gokr-build-kernel in development branch
+	d, err := os.Create(path.Join(*buildPath, "url.go"))
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	t, err := template.New("url.go").Parse(urlTemplate)
+	if err != nil {
+		return err
+	}
+
+	if err := t.ExecuteTemplate(d, "url.go", downloadURL); err != nil {
+		return err
+	}
+
+	if o, err := exec.Command("git", "status", "--short", "cmd/gokr-build-kernel/url.go").CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		return err
+	} else {
+		if !*dobuild && strings.TrimSpace(string(o[:])) == "" {
+			return fmt.Errorf("no change")
+		}
+	}
+
+	// commit it
+	if err := exec.Command("git", "checkout", "development").Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("git", "add", path.Join(*buildPath, "url.go")).Run(); err != nil {
+		return err
+	}
+
+	if o, err := exec.Command("git", "commit", "-m", fmt.Sprintf("Upgrade to version %s", latestVersion)).CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		// log.Fatal(err)
+		log.Println("ignoring exit code 1")
+	}
+
+	if o, err := exec.Command("git", "push", "origin", "development").CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		return err
+	}
+
+	if o, err := exec.Command("git", "checkout", "-B", fmt.Sprintf("build-%s", latestVersion)).CombinedOutput(); err != nil {
+		log.Println(string(o[:]))
+		return err
+	}
+
+	if !*dobuild {
+		fmt.Println("*********************************")
+		fmt.Println()
+		fmt.Printf("Execute `go run %s` to build the kernel\n", path.Join(path.Dir(*buildPath), "gokr-rebuild-kernel", "kernel.go"))
+		fmt.Println()
+		fmt.Println("*********************************")
+		return nil
+	}
+	return nil
+}
+
+type ReleasesResponse struct {
+	LatestStable struct {
+		Version string `json:"version"`
+	} `json:"latest_stable"`
+	Releases []struct {
+		Iseol    bool        `json:"iseol"`
+		Version  string      `json:"version"`
+		Moniker  string      `json:"moniker"`
+		Source   string      `json:"source"`
+		Pgp      interface{} `json:"pgp"`
+		Released struct {
+			Timestamp int    `json:"timestamp"`
+			Isodate   string `json:"isodate"`
+		} `json:"released"`
+		Gitweb    string      `json:"gitweb"`
+		Changelog interface{} `json:"changelog"`
+		Diffview  string      `json:"diffview"`
+		Patch     struct {
+			Full        string `json:"full"`
+			Incremental string `json:"incremental"`
+		} `json:"patch"`
+	} `json:"releases"`
 }
