@@ -5,5 +5,7 @@ enable_uart=0
 
 kernel=vmlinuz
 
+disable_overscan=1
+
 # over_voltage=6
 # arm_freq=2000
