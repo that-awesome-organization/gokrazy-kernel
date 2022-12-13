@@ -66,9 +66,6 @@ var patchFiles = []string{
 	"0201-enable-spidev.patch",
 	// logo
 	"0001-gokrazy-logo.patch",
-	// The following 04* patches fix booting with newer firmware versions:
-	// https://www.spinics.net/lists/arm-kernel/msg975291.html
-	"0404-vec.patch",
 }
 
 func copyFile(dest, src string) error {
