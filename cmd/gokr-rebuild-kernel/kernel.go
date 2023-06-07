@@ -35,7 +35,7 @@ var latest = "{{ . }}"
 )
 
 const dockerFileContents = `
-FROM debian:stretch
+FROM debian:buster
 
 RUN apt-get update && apt-get install -y crossbuild-essential-arm64 bc libssl-dev bison flex kmod
 
