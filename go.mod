@@ -1,3 +1,3 @@
 module development.thatwebsite.xyz/gokrazy/kernel
 
-go 1.18
+go 1.21
