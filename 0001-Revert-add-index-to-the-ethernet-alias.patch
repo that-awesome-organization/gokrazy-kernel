@@ -19,8 +19,8 @@ ethernet alias has an index.
 
 diff --git a/arch/arm/boot/dts/bcm283x-rpi-smsc9512.dtsi b/arch/arm/boot/dts/bcm283x-rpi-smsc9512.dtsi
 index 9a0599f..12c981e 100644
---- a/arch/arm/boot/dts/bcm283x-rpi-smsc9512.dtsi
-+++ b/arch/arm/boot/dts/bcm283x-rpi-smsc9512.dtsi
+--- a/arch/arm/boot/dts/broadcom/bcm283x-rpi-smsc9512.dtsi
++++ b/arch/arm/boot/dts/broadcom/bcm283x-rpi-smsc9512.dtsi
 @@ -1,6 +1,6 @@
  / {
  	aliases {
@@ -31,8 +31,8 @@ index 9a0599f..12c981e 100644
  
 diff --git a/arch/arm/boot/dts/bcm283x-rpi-smsc9514.dtsi b/arch/arm/boot/dts/bcm283x-rpi-smsc9514.dtsi
 index dc7ae77..3f0a56e 100644
---- a/arch/arm/boot/dts/bcm283x-rpi-smsc9514.dtsi
-+++ b/arch/arm/boot/dts/bcm283x-rpi-smsc9514.dtsi
+--- a/arch/arm/boot/dts/broadcom/bcm283x-rpi-smsc9514.dtsi
++++ b/arch/arm/boot/dts/broadcom/bcm283x-rpi-smsc9514.dtsi
 @@ -1,6 +1,6 @@
  / {
  	aliases {
