@@ -208,6 +208,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	dtb5Path, err := find("bcm2712-rpi-5-b.dtb")
+	if err != nil {
+		log.Fatal(err)
+	}
 	libPath, err := find("lib")
 	if err != nil {
 		log.Fatal(err)
@@ -307,6 +311,10 @@ func main() {
 	}
 
 	if err := copyFile(dtb4Path, filepath.Join(tmp, "bcm2711-rpi-4-b.dtb")); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := copyFile(dtb5Path, filepath.Join(tmp, "bcm2712-rpi-5-b.dtb")); err != nil {
 		log.Fatal(err)
 	}
 
